@@ -144,14 +144,17 @@ are undefined."
                                         ((8 nil) '(unsigned-byte 8))
                                         (16 '(unsigned-byte 16)))))
 
+(declaim (ftype (function (image) (integer 0 2147483647)) image-height))
 (defun image-height (image)
   "The height of image, i.e., the number of rows."
   (array-dimension image 0))
 
+(declaim (ftype (function (image) (integer 0 2147483647)) image-width))
 (defun image-width (image)
   "The width of IMAGE, i.e., the number of columns."
   (array-dimension image 1))
 
+(declaim (ftype (function (image) (integer 1 4)) image-channels))
 (defun image-channels (image)
   "The number of channels in IMAGE.  Grayscale images have one
 channel, whereas RGB images have three."

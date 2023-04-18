@@ -18,62 +18,75 @@
 
 (defcfun "png_access_version_number" :uint32)
 
+(declaim (inline png-create-read-struct))
 (defcfun "png_create_read_struct" :pointer
   (user-png-ver :string)
   (error-ptr :pointer)
   (error-fn :pointer)
   (warn-fn :pointer))
 
+(declaim (inline png-destroy-read-struct))
 (defcfun "png_destroy_read_struct" :void
   (png-ptr-ptr :pointer)
   (info-ptr-ptr :pointer)
   (end-info-ptr-ptr :pointer))
 
+(declaim (inline png-create-write-struct))
 (defcfun "png_create_write_struct" :pointer
   (user-png-ver :string)
   (error-ptr :pointer)
   (error-fn :pointer)
   (warn-fn :pointer))
 
+(declaim (inline png-destroy-write-struct))
 (defcfun "png_destroy_write_struct" :void
   (png-ptr-ptr :pointer)
   (info-ptr-ptr :pointer))
 
+(declaim (inline png-create-info-struct))
 (defcfun "png_create_info_struct" :pointer
   (png-ptr :pointer))
 
+(declaim (inline png-destroy-info-struct))
 (defcfun "png_destroy_info_struct" :void
   (png-ptr :pointer)
   (info-ptr-ptr :pointer))
 
+(declaim (inline png-init-io))
 (defcfun "png_init_io" :void
   (png-ptr :pointer)
   (file :pointer))
 
+(declaim (inline png-set-read-fn))
 (defcfun "png_set_read_fn" :void
   (png-ptr :pointer)
   (io-ptr :pointer)
   (read-data-fn :pointer))
 
+(declaim (inline png-set-write-fn))
 (defcfun "png_set_write_fn" :void
   (png-ptr :pointer)
   (io-ptr :pointer)
   (write-data-fn :pointer)
   (output-flush-fn :pointer))
 
+(declaim (inline png-get-io-ptr))
 (defcfun "png_get_io_ptr" :pointer
   (png-ptr :pointer))
 
+(declaim (inline png-read-info))
 (defcfun "png_read_info" :void
   (png-ptr :pointer)
   (info-ptr :pointer))
 
+(declaim (inline png-read-png))
 (defcfun "png_read_png" :void
   (png-ptr :pointer)
   (info-ptr :pointer)
   (png-transforms :int)
   (params :pointer))
 
+(declaim (inline png-get-ihdr))
 (defcfun "png_get_IHDR" :uint32
   (png-ptr :pointer)
   (info-ptr :pointer)
@@ -85,6 +98,7 @@
   (compression-type-int-ptr :pointer)
   (filter-type-int-ptr :pointer))
 
+(declaim (inline png-set-ihdr))
 (defcfun "png_set_IHDR" :void
   (png-ptr :pointer)
   (info-ptr :pointer)
@@ -96,58 +110,204 @@
   (compression-type :int)
   (filter-type :int))
 
+(declaim (inline png-set-bgr))
 (defcfun "png_set_bgr" :void
   (png-ptr :pointer))
 
+(declaim (inline png-set-palette-to-rgb))
 (defcfun "png_set_palette_to_rgb" :void
   (png-ptr :pointer))
 
+(declaim (inline png-set-expand-gray-1-2-4-to-8))
 (defcfun "png_set_expand_gray_1_2_4_to_8" :void
   (png-ptr :pointer))
 
+(declaim (inline png-set-expand))
 (defcfun "png_set_expand" :void
   (png-ptr :pointer))
 
+(declaim (inline png-get-valid))
 (defcfun "png_get_valid" :uint32
   (png-ptr :pointer)
   (info-ptr :pointer)
   (flag :uint32))
 
+(declaim (inline png-set-trns-to-alpha))
 (defcfun "png_set_tRNS_to_alpha" :void
   (png-ptr :pointer))
 
+(declaim (inline png-set-strip-16))
 (defcfun "png_set_strip_16" :void
   (png-ptr :pointer))
 
+(declaim (inline png-set-strip-alpha))
 (defcfun "png_set_strip_alpha" :void
   (png-ptr :pointer))
 
+(declaim (inline png-set-swap))
 (defcfun "png_set_swap" :void
   (png-ptr :pointer))
 
+(declaim (inline png-get-rows))
 (defcfun "png_get_rows" :pointer
   (png-ptr :pointer)
   (info-ptr :pointer))
 
+(declaim (inline png-set-rows))
 (defcfun "png_set_rows" :void
   (png-ptr :pointer)
   (info-ptr :pointer)
   (row-pointers :pointer))
 
+(declaim (inline png-read-image))
 (defcfun "png_read_image" :void
   (png-ptr :pointer)
   (row-pointers :pointer))
 
+(declaim (inline png-write-png))
 (defcfun "png_write_png" :void
   (png-ptr :pointer)
   (info-ptr :pointer)
   (transforms :int)
   (params :pointer))
 
+(declaim (inline memcpy))
 (defcfun "memcpy" :pointer
   (dest :pointer)
   (source :pointer)
   (n size))
+
+(defcstruct (%png-color :class png-color-type)
+  (red png-byte)
+  (green png-byte)
+  (blue png-byte))
+
+(defstruct png-color
+  (red 0 :type (unsigned-byte 8))
+  (green 0 :type (unsigned-byte 8))
+  (blue 0 :type (unsigned-byte 8)))
+
+(defmethod expand-into-foreign-memory (object (type png-color-type) pointer)
+  `(with-foreign-slots ((red green blue) ,pointer (:struct %png-color))
+     (setf red (png-color-red ,object)
+           green (png-color-green ,object)
+           blue (png-color-blue ,object))))
+
+(defmethod translate-into-foreign-memory (object (type png-color-type) pointer)
+  (with-foreign-slots ((red green blue) pointer (:struct %png-color))
+    (setf red (png-color-red object)
+          green (png-color-green object)
+          blue (png-color-blue object))))
+
+(defmethod expand-from-foreign (pointer (type png-color-type))
+  `(with-foreign-slots ((red green blue) ,pointer (:struct %png-color))
+     (make-png-color :red red :green green :blue blue)))
+
+(defmethod translate-from-foreign (pointer (type png-color-type))
+  (with-foreign-slots ((red green blue) pointer (:struct %png-color))
+    (make-png-color :red red :green green :blue blue)))
+
+(defcstruct (%png-color-8 :class png-color-8-type)
+  (red png-byte)
+  (green png-byte)
+  (blue png-byte)
+  (gray png-byte)
+  (alpha png-byte))
+
+(defstruct png-color-8
+  (red 0 :type (unsigned-byte 16))
+  (green 0 :type (unsigned-byte 16))
+  (blue 0 :type (unsigned-byte 16))
+  (gray 0 :type (unsigned-byte 16))
+  (alpha 0 :type (unsigned-byte 16)))
+
+(defmethod expand-into-foreign-memory ((object png-color-8) (type png-color-8-type) pointer)
+  `(with-foreign-slots ((red green blue gray alpha) ,pointer (:struct %png-color-8))
+     (setf alpha (png-color-8-alpha ,object)
+           red (png-color-8-red ,object)
+           green (png-color-8-green ,object)
+           blue (png-color-8-blue ,object)
+           gray (png-color-8-gray ,object))))
+
+(defmethod translate-into-foreign-memory ((object png-color-8) (type png-color-8-type) pointer)
+  (with-foreign-slots ((red green blue gray alpha) pointer (:struct %png-color-8))
+    (setf alpha (png-color-8-alpha object)
+          red (png-color-8-red object)
+          green (png-color-8-green object)
+          blue (png-color-8-blue object)
+          gray (png-color-8-gray object))))
+
+(defmethod expand-from-foreign (pointer (type png-color-8-type))
+  `(with-foreign-slots ((red green blue gray alpha) ,pointer (:struct %png-color-8))
+     (make-png-color-8 :alpha alpha :red red :green green :blue blue :gray gray)))
+
+(defmethod translate-from-foreign (pointer (type png-color-8-type))
+  (with-foreign-slots ((red green blue gray alpha) pointer (:struct %png-color-8))
+    (make-png-color-8 :alpha alpha :red red :green green :blue blue :gray gray)))
+
+(defcstruct (%png-color-16 :class png-color-16-type)
+  (index png-byte)
+  (red :uint16)
+  (green :uint16)
+  (blue :uint16)
+  (gray :uint16))
+
+(defstruct png-color-16
+  (index 0 :type (unsigned-byte 8))
+  (red 0 :type (unsigned-byte 16))
+  (green 0 :type (unsigned-byte 16))
+  (blue 0 :type (unsigned-byte 16))
+  (gray 0 :type (unsigned-byte 16)))
+
+(defmethod expand-into-foreign-memory ((object png-color-16) (type png-color-16-type) pointer)
+  `(with-foreign-slots ((index red green blue gray) ,pointer (:struct %png-color-16))
+     (setf index (png-color-16-index ,object)
+           red (png-color-16-red ,object)
+           green (png-color-16-green ,object)
+           blue (png-color-16-blue ,object)
+           gray (png-color-16-gray ,object))))
+
+(defmethod translate-into-foreign-memory ((object png-color-16) (type png-color-16-type) pointer)
+  (with-foreign-slots ((index red green blue gray) pointer (:struct %png-color-16))
+    (setf index (png-color-16-index object)
+          red (png-color-16-red object)
+          green (png-color-16-green object)
+          blue (png-color-16-blue object)
+          gray (png-color-16-gray object))))
+
+(defmethod expand-from-foreign (pointer (type png-color-16-type))
+  `(with-foreign-slots ((index red green blue gray) ,pointer (:struct %png-color-16))
+     (make-png-color-16 :index index :red red :green green :blue blue :gray gray)))
+
+(defmethod translate-from-foreign (pointer (type png-color-16-type))
+  (with-foreign-slots ((index red green blue gray) pointer (:struct %png-color-16))
+    (make-png-color-16 :index index :red red :green green :blue blue :gray gray)))
+
+(declaim (inline png-set-compression-level))
+(defcfun "png_set_compression_level" :void
+  (png-ptr :pointer)
+  (level :int))
+
+(declaim (inline png-set-plte))
+(defcfun "png_set_PLTE" :void
+  (png-ptr :pointer)
+  (info-ptr :pointer)
+  (palette :pointer)
+  (num-palette :int))
+
+(declaim (inline png-set-trns))
+(defcfun "png_set_tRNS" :void
+  (png-ptr :pointer)
+  (info-ptr :pointer)
+  (trans-alpha :pointer)
+  (num-trans :int)
+  (trans-color :pointer))
+
+(declaim (inline png-set-sbit))
+(defcfun "png_set_sBIT" :void
+  (png-ptr :pointer)
+  (info-ptr :pointer)
+  (sig-bit :pointer))
 
 
 ;;; Input/output.
@@ -210,7 +370,7 @@
        (when (null-pointer-p ,var)
 	 (error "Failed to allocate PNG write struct."))
        (unwind-protect (progn ,@body)
-	 (with-foreign-pointer (,pointer (foreign-type-size :pointer))
+	 (with-foreign-pointer (,pointer ,(foreign-type-size :pointer))
 	   (setf (mem-ref ,pointer :pointer) ,var)
 	   ,(ecase direction
 		   (:input `(png-destroy-read-struct ,pointer (null-pointer)
@@ -239,6 +399,7 @@
 	  (values (mem-ref width :uint32) (mem-ref height :uint32)
 		  (mem-ref bit-depth :int) (mem-ref color-type :int)))))))
 
+(declaim (ftype (function (image) (integer 1 2)) bytes-per-pixel))
 (defun bytes-per-pixel (image)
   (ecase (image-bit-depth image)
     (16 2)
@@ -249,9 +410,7 @@
   (let ((row-pointers (gensym "ROW-POINTERS"))
 	(raw-data (gensym "RAW-DATA"))
 	(i (gensym "I")))
-    `(let ((,row-pointers (make-shareable-byte-vector
-			   (* (image-height ,image)
-			      (foreign-type-size :pointer)))))
+    `(let ((,row-pointers (make-shareable-byte-vector (* (image-height ,image) (foreign-type-size :pointer)))))
        (with-pointer-to-vector-data (,rows-ptr ,row-pointers)
 	 (with-pointer-to-array-data (,raw-data ,image)
 	   (dotimes (,i (image-height ,image))
